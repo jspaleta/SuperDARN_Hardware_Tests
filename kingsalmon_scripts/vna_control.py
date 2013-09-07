@@ -13,6 +13,7 @@ def vna_init(vna):
     lan_send(vna, ":INITiate:CONTinuous OFF")
     lan_send(vna, ":CALC1:PARameter:DEFine S21")
     lan_send(vna, ":SENS1:AVER OFF");
+#    lan_send(vna, ":SENS1:AVER:COUN 8");
 
 # span and center in hertz
 def vna_setspan(vna, span, center, points):
@@ -26,7 +27,7 @@ def vna_preset(vna):
 def vna_readdat(vna, form):
     lan_send(vna, ":CALC1:FORM " + form)
     lan_send(vna, ":INIT1:IMM")
-    time.sleep(.5)
+    time.sleep(5)
     sweep = lan_send(vna, ":CALC1:DATA:FDAT?").split(',') # run this twice?.. first time is just SCPI> .. wtf
     sweep = lan_send(vna, ":CALC1:DATA:FDAT?").split(',')
     sweep[-1] = sweep[-1][:-7] # trim off trailing '\r\nSCPI>'
@@ -36,6 +37,10 @@ def vna_readdat(vna, form):
 def vna_readphase(vna):
     phase = vna_readdat(vna, UNWRAPPED_PHASE)
     return phase[0::2]
+
+def vna_timedelay(vna):
+    phase = vna_readphase(vna)
+    pdb.set_trace()
 
 def vna_through_cal(vna):
     raw_input('connect S21 through and press enter to continue')
@@ -62,6 +67,6 @@ if __name__ == '__main__':
     vna_init(vna)
     vna_setspan(vna, 10e6, 10e6, 401)
 #    vna_through_cal(vna)
-    plot(vna_readphase(vna))
+    plot(vna_timedelay(vna))
     lan_close(vna)
     show()
