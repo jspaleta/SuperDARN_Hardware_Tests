@@ -39,7 +39,7 @@ def write_csv(directory,data):
     if not os.path.isdir(card_dir):
         print "Not a directory: %s" % (card_dir)
         return
-    beam_file=os.path.join(card_dir,"beam_%02d" % (data.beam)) 
+    beam_file=os.path.join(card_dir,"beam_%02d.csv" % (data.beam)) 
     csv_file=open(beam_file,"w")
     csv_writer=csv.writer(csv_file,delimiter="\t")
     header=[

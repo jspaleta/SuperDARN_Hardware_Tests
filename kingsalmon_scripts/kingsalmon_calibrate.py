@@ -53,6 +53,7 @@ if __name__ == '__main__':
     if args.cal:
         print 'calibrating VNA'
         vna_through_cal(vna)
+        vna_trigger(vna, TIMEOUT, args.avg)
 
     # configure VNA measurements (add smoothing to time delay channel, enable averaging) 
     vna_smoothapeture(vna,2,5.0)  
@@ -73,7 +74,7 @@ if __name__ == '__main__':
 
     # step through each path and measure phase, time delay, and magnitude at each beam setting
     for p in range(args.paths):
-        raw_input('connect path ' + str(p) + ' and press enter to continue... ')
+        p = int(raw_input('connect and enter a path number and then press enter to continue... '))
         csvdat.card = p
 
         for b in range(args.beams):

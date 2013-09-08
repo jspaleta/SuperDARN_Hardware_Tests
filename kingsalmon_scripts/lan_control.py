@@ -4,6 +4,8 @@ VNAHOST = '192.168.17.100'
 
 def lan_init(host):
     tn = telnetlib.Telnet(host)
+    time.sleep(.5)
+    print "hello: " + tn.read_until("MAGIC", timeout=5)
     return tn 
 
 def lan_send(tn, command):
