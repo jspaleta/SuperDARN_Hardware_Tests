@@ -7,7 +7,7 @@ def lan_init(host):
     return tn 
 
 def lan_send(tn, command):
-    tn.write(command + '\r\n')
+    tn.write(command + ';*WAI\r\n')
     response = tn.read_until('>', VNATIMEOUT)
     return response
 

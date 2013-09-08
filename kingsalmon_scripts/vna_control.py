@@ -2,7 +2,7 @@ from lan_control import *
 from pylab import *
 import time, pdb
 
-VNAHOST = '192.168.17.100'
+VNAHOST = '192.168.0.145'
 
 UNWRAPPED_PHASE = 'UPH'
 PHASE = 'PHAS'
@@ -79,6 +79,7 @@ def vna_readdat(vna,param,form):
       sweep = [float(s) for s in sweep]
     except:
       pdb.set_trace()
+    time.sleep(.2)
     return sweep 
 
 def vna_readextendedphase(vna):
