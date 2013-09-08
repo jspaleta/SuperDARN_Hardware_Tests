@@ -1,6 +1,7 @@
 import csv
 import os
 import datetime
+
 class csv_data:
     card=None
     beam=None
@@ -18,7 +19,7 @@ class csv_data:
     freq_start=None
     freq_end=None
 
-def write_csv(directory,csv_data):
+def write_csv(directory,data):
     if data.timestamp is None: data.timestamp=datetime.datetime.now()
     if data.freqs is None: data.freqs=[]
     if data.tdelay is None: data.tdelay=[]

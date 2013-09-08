@@ -8,8 +8,9 @@
 from pylab import *
 from vna_control import *
 from qnx_beamcontrol import *
-import argparse, csv, os
-import sys
+from csv_utils import *
+
+import argparse, os, time
 
 SWEEP_CENTER = 15e6
 SWEEP_SPAN = 20e6
@@ -27,6 +28,7 @@ if __name__ == '__main__':
     parser.add_argument("--beams", type=int, help="specify number of beams", default=BEAMS)
     parser.add_argument("--avg", type=int, help="specify count to average", default=1)
     parser.add_argument("--paths", type=int, help="specify number of paths to calibrate", default=1)
+    
 
     args = parser.parse_args()
 
@@ -57,16 +59,33 @@ if __name__ == '__main__':
     vna_enablesmoothing(vna,2,True)  
     vna_setave(vna,args.avg)  
     vna_enableave(vna,True)  
-   
+  
+    # setup csv data structure
+    csvdat = csv_data()
+    csvdat.sweep_count = SWEEP_POINTS
+    csvdat.ave_count = args.avg
+    csvdat.ave_enable = (args.avg > 1)
+    csvdat.smoothing_percent = 5
+    csvdat.smoothing_enable = True
+    csvdat.freqs = vna_readspan(vna)
+    csvdat.freq_start = min(csvdat.freqs)
+    csvdat.freq_end = max(csvdat.freqs)
+
     # step through each path and measure phase, time delay, and magnitude at each beam setting
     for p in range(args.paths):
         raw_input('connect path ' + str(p) + ' and press enter to continue... ')
+        csvdat.card = p
+
         for b in range(args.beams):
-            vna_trigger(vna, TIMEOUT, args.avg)
-            tdelay=vna_readtimedelay(vna)
-            ephase=vna_readextendedphase(vna)
-            mlog=vna_readmlog(vna)
-            phase=vna_readphase(vna)
+            csvdat.beam = b
             qnx_setbeam(args.qnxip, b)
-    
+
+            vna_trigger(vna, TIMEOUT, args.avg)
+
+            csvdat.tdelay = vna_readtimedelay(vna)
+            csvdat.ephase = vna_readextendedphase(vna)
+            csvdat.phase = vna_readphase(vna)
+            csvdat.mlog = vna_readmlog(vna)
+            
+            write_csv(args.ddir, csvdat)
     lan_close(vna)
