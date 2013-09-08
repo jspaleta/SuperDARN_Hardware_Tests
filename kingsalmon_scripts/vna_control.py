@@ -64,22 +64,22 @@ def vna_enablesmoothing(vna, param,enable):
 def vna_preset(vna):
     return lan_send(vna, ":SYSTem:PRESet")
     
-def vna_trigger(vna,timeout=0.1):
-    lan_send(vna, ":INIT1:IMM")
-    time.sleep(timeout)
-    
+def vna_trigger(vna,timeout=0.1, triggers=1):
+    for i in xrange(triggers):
+        lan_send(vna, ":INIT1:IMM")
+        time.sleep(timeout)
+     
 
 def vna_readdat(vna,param,form):
+    time.sleep(.2)
     param_str="PAR%i" % (param) 
     lan_send(vna, ":CALC1:%s:SEL" % (param_str))
     lan_send(vna, ":CALC1:FORM %s" % (form))
     sweep = lan_send(vna, ":CALC1:DATA:FDAT?").split(',')
-    sweep[-1] = sweep[-1][:-7] # trim off trailing '\r\nSCPI>'
     try:	
-      sweep = [float(s) for s in sweep]
+        sweep = [float(s) for s in sweep]
     except:
-      pdb.set_trace()
-    time.sleep(.2)
+        pdb.set_trace()
     return sweep 
 
 def vna_readextendedphase(vna):
@@ -112,17 +112,19 @@ def vna_through_cal(vna):
     time.sleep(1)
     raw_input('calibration complete, connect DUT and press enter to continue')
 
-def vna_readspan(sock, measurement):
-    lan_send(vna, ":CALCulate:PARameter:SELect " + measurement_name)
-    lan_send(vna, ":INITiate:IMMediate;*wai")
-    return lan_send(vna, ":CALCulate:DATA? SDATA")
+def vna_readspan(vna):
+    freqs = []
+    start = float(lan_send(vna, ":SENSe1:FREQuency:STAR?"))
+    stop = float(lan_send(vna, ":SENSe1:FREQuency:STOP?"))
+    points = float(lan_send(vna, ":SENSe1:SWEep:POINts?"))
+    return linspace(start, stop, points) 
 
 if __name__ == '__main__':
     vna = lan_init(VNAHOST)
-    vna_preset(vna)
+#   vna_preset(vna)
     vna_init(vna)
-    vna_setspan(vna, 10e6, 10e6, 401)
+    vna_setspan(vna, 12e6, 18e6, 401)
 #    vna_through_cal(vna)
-    plot(vna_timedelay(vna))
+    vna_readspan(vna) 
     lan_close(vna)
     show()
