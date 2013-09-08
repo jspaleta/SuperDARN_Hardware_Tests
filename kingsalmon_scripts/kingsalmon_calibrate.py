@@ -46,6 +46,7 @@ if __name__ == '__main__':
         print 'calibrating VNA'
         vna_through_cal(vna)
 
+    qnx_setbeam(args.qnxip, 7)
     vna_smoothapeture(vna,2,5.0)  
     vna_enablesmoothing(vna,2,True)  
     vna_setave(vna,args.c)  
@@ -53,9 +54,15 @@ if __name__ == '__main__':
     for i in xrange(args.c):
         print "Trigger : %d" % (i)
         vna_trigger(vna,timeout)
-    time.sleep(0.5)
-    data=vna_readtimedelay(vna)
-    print data
+    time.sleep(1.0)
+    tdelay=vna_readtimedelay(vna)
+    time.sleep(0.2)
+    ephase=vna_readextendedphase(vna)
+    time.sleep(0.2)
+    mlog=vna_readmlog(vna)
+    time.sleep(0.2)
+    phase=vna_readphase(vna)
+    time.sleep(0.2)
     sys.exit(0)
     # step through each card and measure phase at each beam setting
     # TODO: save this data in a useful format

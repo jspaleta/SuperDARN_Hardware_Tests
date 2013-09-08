@@ -2,11 +2,12 @@
 # copy over ssh keys to make this faster
 
 import os
+import time
 
 QNX_IP = '192.168.04'
 BEAM_SETTLE = .1
 
 def qnx_setbeam(ip, beam):
-    os.system('ssh root@' + QNX_IP + '"dio_beam_direction -b ' + str(int(beam)) + '"')
+    os.system('ssh root@' + QNX_IP + ' "/root/current_ros/dio_beam_direction -b ' + str(int(beam)) + '"')
     time.sleep(BEAM_SETTLE)
 

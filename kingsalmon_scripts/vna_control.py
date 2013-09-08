@@ -75,7 +75,10 @@ def vna_readdat(vna,param,form):
     lan_send(vna, ":CALC1:FORM %s" % (form))
     sweep = lan_send(vna, ":CALC1:DATA:FDAT?").split(',')
     sweep[-1] = sweep[-1][:-7] # trim off trailing '\r\nSCPI>'
-    sweep = [float(s) for s in sweep]
+    try:	
+      sweep = [float(s) for s in sweep]
+    except:
+      pdb.set_trace()
     return sweep 
 
 def vna_readextendedphase(vna):
