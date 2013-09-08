@@ -1,4 +1,4 @@
-import telnetlib 
+import telnetlib, time
 VNATIMEOUT = 5 # seconds
 VNAHOST = '192.168.17.100'
 
@@ -7,14 +7,17 @@ def lan_init(host):
     return tn 
 
 def lan_send(tn, command):
-    tn.write(command + '\r\n')
+    tn.write(command + ';*WAI\r\n')
+    time.sleep(.05)
     response = tn.read_until('>', VNATIMEOUT)
+    response = response[:-7] # strip trailing SCPI>\r\n
+    print str(command) + ', reponse: ' + str(response)
     return response
 
 def lan_close(tn):
+    print tn.read_very_lazy()
     tn.close()
 
 if __name__ == '__main__':
     tn = lan_init(VNAHOST)
-    print lan_send(tn, ":SYST:PRES")
     lan_close(tn)
