@@ -5,13 +5,23 @@ import time, pdb
 VNAHOST = '192.168.17.100'
 
 UNWRAPPED_PHASE = 'UPH'
+PHASE = 'PHAS'
 LOG_MAGNITUDE = 'MLOG'
+GROUP_DELAY = 'GDEL'
 REAL = 'REAL'
 IMAG = 'IMAG'
 
 def vna_init(vna):
     lan_send(vna, ":INITiate:CONTinuous OFF")
-    lan_send(vna, ":CALC1:PARameter:DEFine S21")
+    lan_send(vna, ":CALC1:PAR:COUN 4")
+    lan_send(vna, ":CALC1:PAR1:SEL")
+    lan_send(vna, ":CALC1:PAR1:DEFine S21")
+    lan_send(vna, ":CALC1:PAR2:SEL")
+    lan_send(vna, ":CALC1:PAR2:DEFine S21")
+    lan_send(vna, ":CALC1:PAR3:SEL")
+    lan_send(vna, ":CALC1:PAR3:DEFine S21")
+    lan_send(vna, ":CALC1:PAR4:SEL")
+    lan_send(vna, ":CALC1:PAR4:DEFine S21")
     lan_send(vna, ":SENS1:AVER OFF");
 #    lan_send(vna, ":SENS1:AVER:COUN 8");
 
@@ -21,15 +31,46 @@ def vna_setspan(vna, span, center, points):
     lan_send(vna, ":SENSe1:FREQuency:CENTer " + str(center))
     lan_send(vna, ":SENSe1:SWEep:POINts " + str(points))
 
+def vna_setave(vna, count):
+    lan_send(vna, ":SENS1:AVER:COUN %i" (count));
+
+def vna_clearave(vna):
+    lan_send(vna, ":SENS1:AVER:CLE");
+
+def vna_enableave(vna, enable):
+    if enable:
+        lan_send(vna, ":SENS1:AVER ON");
+    else:
+        lan_send(vna, ":SENS1:AVER OFF");
+
+def vna_smoothapeture(vna, param,percent):
+    param_str="PAR%i" % (param) 
+    lan_send(vna, ":CALC1:%s:SEL" % (param_str))
+    lan_send(vna, ":CALC1:SMO:APER %f" % (percent))
+    pass
+
+def vna_enablesmoothing(vna, param,enable):
+    param_str="PAR%i" % (param) 
+    if enable:
+        lan_send(vna, ":CALC1:%s:SEL" % (param_str))
+        lan_send(vna, ":CALC1:SMO:STAT ON")
+    else:
+        lan_send(vna, ":CALC1:%s:SEL" % (param_str))
+        lan_send(vna, ":CALC1:SMO:STAT OFF")
+
 def vna_preset(vna):
     return lan_send(vna, ":SYSTem:PRESet")
-
-def vna_readdat(vna, form):
-    lan_send(vna, ":CALC1:FORM " + form)
+    
+def vna_trigger(vna):
     lan_send(vna, ":INIT1:IMM")
     time.sleep(5)
-    sweep = lan_send(vna, ":CALC1:DATA:FDAT?").split(',') # run this twice?.. first time is just SCPI> .. wtf
+
+def vna_readdat(vna,param,form):
+    param_str="PAR%i" % (param) 
+    lan_send(vna, ":CALC1:%s:SEL" % (param_str))
+    lan_send(vna, ":CALC1:FORM %s" % (form))
     sweep = lan_send(vna, ":CALC1:DATA:FDAT?").split(',')
+    print sweep
     sweep[-1] = sweep[-1][:-7] # trim off trailing '\r\nSCPI>'
     sweep = [float(s) for s in sweep]
     return sweep 
