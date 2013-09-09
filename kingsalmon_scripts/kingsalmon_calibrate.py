@@ -19,6 +19,7 @@ TIMEOUT = max(0.1,0.04/201.0 * SWEEP_POINTS)
 BEAMS = 16
 
 if __name__ == '__main__':
+    # setup arguement parser and parse arguements
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--cal", action="count", help="run through calibration on VNA before taking measurements", default=0)
@@ -29,12 +30,21 @@ if __name__ == '__main__':
     parser.add_argument("--avg", type=int, help="specify count to average", default=1)
     parser.add_argument("--paths", type=int, help="specify number of paths to calibrate", default=1)
     
-
     args = parser.parse_args()
 
-    # sanity check average count
-    if args.avg < 1 : args.avg = 1 
+    # sanity check arguements 
+    if args.avg < 1:
+        print "error: average count is less than 1"
+    
+    if not os.path.exists(args.ddir):
+        print "error: data directory does not exist: %s" % (directory)
+    
+    if args.beams < 1:
+        print "error: beam count is less than 1"
 
+    if args.paths < 1:
+        print "error: path count is less than 1"
+        
     # open connection with VNA
     vna = lan_init(args.vnaip)
     
@@ -45,22 +55,19 @@ if __name__ == '__main__':
     # init VNA measurements
     vna_init(vna)
     
-    # set VNA span
+    # configure VNA measurements (add smoothing to time delay channel, enable averaging) 
     vna_setspan(vna, SWEEP_SPAN, SWEEP_CENTER, SWEEP_POINTS)
-  
+    vna_setave(vna,args.avg)  
+    vna_enableave(vna,True)  
+    vna_smoothapeture(vna,2,5.0)  
+    vna_enablesmoothing(vna,2,True)  
+
     # calibrate VNA if run with --cal
-    # TODO: calibration is undertested... verify this
     if args.cal:
         print 'calibrating VNA'
         vna_through_cal(vna)
         vna_trigger(vna, TIMEOUT, args.avg)
 
-    # configure VNA measurements (add smoothing to time delay channel, enable averaging) 
-    vna_smoothapeture(vna,2,5.0)  
-    vna_enablesmoothing(vna,2,True)  
-    vna_setave(vna,args.avg)  
-    vna_enableave(vna,True)  
-  
     # setup csv data structure
     csvdat = csv_data()
     csvdat.sweep_count = SWEEP_POINTS
@@ -68,9 +75,11 @@ if __name__ == '__main__':
     csvdat.ave_enable = (args.avg > 1)
     csvdat.smoothing_percent = 5
     csvdat.smoothing_enable = True
+
     csvdat.freqs = vna_readspan(vna)
     csvdat.freq_start = min(csvdat.freqs)
     csvdat.freq_end = max(csvdat.freqs)
+    
 
     # step through each path and measure phase, time delay, and magnitude at each beam setting
     for p in range(args.paths):
@@ -80,7 +89,7 @@ if __name__ == '__main__':
         for b in range(args.beams):
             csvdat.beam = b
             qnx_setbeam(args.qnxip, b)
-
+            vna_clearave(vna)
             vna_trigger(vna, TIMEOUT, args.avg)
 
             csvdat.tdelay = vna_readtimedelay(vna)
@@ -89,4 +98,5 @@ if __name__ == '__main__':
             csvdat.mlog = vna_readmlog(vna)
             
             write_csv(args.ddir, csvdat)
+
     lan_close(vna)
