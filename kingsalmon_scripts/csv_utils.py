@@ -85,7 +85,7 @@ def write_csv(directory,data):
 
 def read_csv(directory,data):
     card_dir=os.path.join(directory,"card_%02d" % (data.card)) 
-    beam_file=os.path.join(card_dir,"beam_%02d" % (data.beam)) 
+    beam_file=os.path.join(card_dir,"beam_%02d.csv" % (data.beam)) 
     print beam_file
     if not os.path.exists(beam_file):
         print "file does not exist: %s" % (beam_file)
