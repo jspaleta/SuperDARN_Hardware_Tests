@@ -83,10 +83,53 @@ def write_csv(directory,data):
     
     return
 
+def read_csv(directory,data):
+    card_dir=os.path.join(directory,"card_%02d" % (data.card)) 
+    beam_file=os.path.join(card_dir,"beam_%02d" % (data.beam)) 
+    print beam_file
+    if not os.path.exists(beam_file):
+        print "file does not exist: %s" % (beam_file)
+        return
+    csv_file=open(beam_file,"r")
+    reader=csv.reader(csv_file,delimiter="\t")
+    header=reader.next()
+    if (data.card!=int(header[1])) :
+      print "Card number mismatch",data.card,header[1] 
+    if (data.beam!=int(header[3])) :
+      print "Beam number mismatch",data.card,header[1] 
+    header=reader.next()
+    data.sweep_count=int(header[1])
+    data.freq_start=float(header[3])
+    data.freq_stop=float(header[5])
+    header=reader.next()
+    data.ave_enable=header[1]=="True"
+    data.ave_count=int(header[3])
+    header=reader.next()
+    data.smoothing_enable=header[1]=="True"
+    data.smoothing_percent=float(header[3])
+    header=reader.next()
+    data.freqs= [0] * data.sweep_count
+    data.tdelay= [0] * data.sweep_count 
+    data.phase= [0] * data.sweep_count
+    data.ephase= [0] * data.sweep_count
+    data.mlog= [0] * data.sweep_count
+    for i in xrange(data.sweep_count):
+      row=reader.next()
+      data.freqs[i]=float(row[0])
+      data.tdelay[i]=float(row[1])
+      data.phase[i]=float(row[2])
+      data.ephase[i]=float(row[3])
+      data.mlog[i]=float(row[4])
+    csv_file.close()
+#    for i in xrange(1200):
+#        print "%5d %8.3e %8.3e %8.3e %8.3e %8.3e" % \
+#          (i,data.freqs[i],data.tdelay[i],data.phase[i],data.ephase[i],data.mlog[i]) 
+    return
+
 if __name__ == '__main__':
-    directory="/tmp/ksr_test"
+    directory="/home/jspaleta/scratch/kingsalmon_test"
     data=csv_data()
-    data.card=0
+    data.card=18
     data.beam=12
     data.sweep_count=1201
     data.freq_start=5E6
@@ -100,5 +143,6 @@ if __name__ == '__main__':
     data.phase=[0,0,0,0,0,0]
     data.ephase=[0.,10.,20.,30.,40.,50.]
     data.mlog=[0,100,200,300,400,500]
+    read_csv(directory,data)
 
-    write_csv(directory,data)
+#    write_csv(directory,data)

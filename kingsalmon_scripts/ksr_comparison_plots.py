@@ -1,0 +1,208 @@
+from csv_utils import *
+import pylab as p
+import sys
+
+directory="/home/jspaleta/scratch/kingsalmon_test/"
+plotdir="ksr_paired_recv_path_plots"
+radar="KSR"
+
+plot_directory=os.path.join(directory,plotdir)
+if not os.path.exists(plot_directory): os.mkdir(plot_directory)
+colors={0:"red",1:"blue",2:"black",3:"green",4:"cyan",5:"yellow"}
+for bmnum in range(16):
+    p.figure(200+bmnum)
+    p.clf()
+    p.figure(300+bmnum)
+    p.clf()
+    p.figure(400+bmnum)
+    p.clf()
+    p.figure(500+bmnum)
+    p.clf()
+for bmnum in range(16):
+  last_main=None
+  last_interf=None
+  p.figure(104)
+  p.clf()
+  for card in [7,8,9,10]:
+    data_interf=csv_data()
+    data_interf.card=card+10
+    data_interf.beam=bmnum
+    data_main=csv_data()
+    data_main.card=card
+    data_main.beam=bmnum
+    read_csv(directory,data_interf)
+    read_csv(directory,data_main)
+
+    freqs=p.array(data_main.freqs)
+    main_tdelay=p.array(data_main.tdelay)
+    interf_tdelay=p.array(data_interf.tdelay)
+    diff_tdelay=interf_tdelay-main_tdelay
+    phase_diff=p.array(data_interf.ephase)-p.array(data_main.ephase)
+    phase_diff=(phase_diff % 360.0)
+    phase_diff=p.array([(ph > 180) * -360 + ph for ph in phase_diff])
+
+    main_ephase_diff=p.diff(data_main.ephase)
+    interf_ephase_diff=p.diff(data_interf.ephase)
+    freq_diff=p.diff(data_main.freqs)
+    main_ephase_tdelay=-main_ephase_diff/360.0/freq_diff
+    interf_ephase_tdelay=-interf_ephase_diff/360.0/freq_diff
+    diff_ephase_tdelay=interf_ephase_tdelay-main_ephase_tdelay
+
+    phase_diff_diff=p.diff(phase_diff)
+    phase_diff_tdelay=-(phase_diff_diff/360.0)/freq_diff
+
+    smooth_phase_diff_tdelay=p.zeros_like(phase_diff_tdelay)
+    sum_count=p.zeros_like(phase_diff_tdelay)
+    for i in xrange(len(phase_diff_tdelay)):
+      for j in xrange(40):
+        if i+j < len(phase_diff_tdelay):
+          smooth_phase_diff_tdelay[i]+=phase_diff_tdelay[i+j]
+          sum_count[i]+=1
+        if i-j >= 0:
+          smooth_phase_diff_tdelay[i]+=phase_diff_tdelay[i-j]
+          sum_count[i]+=1
+    smooth_phase_diff_tdelay=smooth_phase_diff_tdelay/sum_count
+
+    if last_main is not None:
+      main_nearest_pair_phase_diff=p.array(data_main.ephase)-p.array(last_main.ephase)
+    if last_interf is not None:
+      interf_nearest_pair_phase_diff=p.array(data_interf.ephase)-p.array(last_interf.ephase)
+
+    p.figure(200+bmnum)
+    p.plot(freqs*1E-6,main_tdelay*1E9,color=colors[ card % 6 ],label="Card %02d" % (card) )
+    if card in [7,8,9,10]:
+      p.figure(300+bmnum)
+      p.plot(freqs*1E-6,interf_tdelay*1E9,color=colors[card % 6 ],label="Card %02d" % (card+10) )
+
+    if last_main is not None:
+      p.figure(400+bmnum)
+      p.plot(freqs*1E-6,main_nearest_pair_phase_diff,color=colors[ card % 6 ],label="Card %02d-%02d" % (card,card-1) )
+    if last_interf is not None:
+      if card in [7,8,9,10]:
+        p.figure(500+bmnum)
+        p.plot(freqs*1E-6,interf_nearest_pair_phase_diff,color=colors[ card % 6 ],label="Card %02d-%02d" % (card+10,card-1+10) )
+    p.figure(100)
+    p.clf()
+    p.grid(True)
+#    p.plot(freqs[0:-1]*1E-6,diff_ephase_tdelay*1E9,color="black")
+    p.plot(freqs*1E-6,diff_tdelay*1E9,color="black",label="Cards: %02d-%02d" % (card,card+10))
+#    p.plot(freqs[0:-1]*1E-6,smooth_phase_diff_tdelay*1E9,color="black",label="Calculated from Diff of VNA Phase Measurement")
+#    p.legend(loc=4)
+    ax=p.gca()
+    ax.set_xlim((8,20))
+    ax.set_ylim((-40,40))
+    p.xlabel("Freq [MHz]")
+    p.ylabel("tdiff [nsec]")
+    p.title("%s Recv Path Time Delay Difference\n Card %02d and Card %02d Beam %d" % \
+      (radar,data_main.card,data_interf.card,data_main.beam))
+    figfile=os.path.join(plot_directory,"tdiff_c%02d-c%02d_b%02d.png" % (card,card+10,bmnum))
+    p.savefig(figfile)
+
+    p.figure(102)
+    p.clf()
+    p.grid(True)
+    p.plot(freqs*1E-6,phase_diff,color="black",label="Phase Diff")
+    p.plot(freqs*1E-6,data_main.phase,color="red",label="Card %02d" % (card) )
+    p.plot(freqs*1E-6,data_interf.phase,color="blue",label="Card %02d" % (card+10) )
+    p.legend(loc=4)
+    ax=p.gca()
+    ax.set_xlim((8,20))
+    ax.set_ylim((-200,200))
+    p.xlabel("Freq [MHz]")
+    p.ylabel("phase [deg]")
+    p.title("%s Recv Path Phase Difference\n Card %02d and Card %02d Beam %d" % \
+      (radar,data_main.card,data_interf.card,data_main.beam))
+    figfile=os.path.join(plot_directory,"phase_diff_c%02d-c%02d_b%02d.png" % (card,card+10,bmnum))
+    p.savefig(figfile)
+
+    p.figure(103)
+    p.clf()
+    p.grid(True)
+    p.plot(freqs*1E-6,main_tdelay*1E9,color="red",label="Card %02d" % (card) )
+    p.plot(freqs*1E-6,interf_tdelay*1E9,color="blue",label="Card %02d" % (card+10) )
+    p.legend(loc=4)
+    ax=p.gca()
+    ax.set_xlim((8,20))
+    ax.set_ylim((0,1000))
+    p.xlabel("Freq [MHz]")
+    p.ylabel("Group Delay [nsec]")
+    p.title("%s Recv Path Group Delay Comparison\n Card %02d and Card %02d Beam %d" % \
+      (radar,data_main.card,data_interf.card,data_main.beam))
+    figfile=os.path.join(plot_directory,"group_delay_c%02d-c%02d_b%02d.png" % (card,card+10,bmnum))
+    p.savefig(figfile)
+
+    p.figure(104)
+#    p.plot(freqs[0:-1]*1E-6,diff_ephase_tdelay*1E9,color="black")
+    p.plot(freqs*1E-6,diff_tdelay*1E9,color=colors[card % 6],label="Cards: %02d-%02d" % (card,card+10))
+#    p.plot(freqs[0:-1]*1E-6,smooth_phase_diff_tdelay*1E9,color="black",label="Calculated from Diff of VNA Phase Measurement")
+
+    last_main=data_main
+    last_interf=data_interf
+
+
+  p.figure(200+bmnum)
+  p.grid(True)
+  p.legend(loc=4)
+  ax=p.gca()
+  ax.set_xlim((8,20))
+  ax.set_ylim((0,1000))
+  p.xlabel("Freq [MHz]")
+  p.ylabel("Group Delay [nsec]")
+  p.title("%s Main Array Group Delay Comparison\n Beam %d" % \
+      (radar,data_main.beam))
+  figfile=os.path.join(plot_directory,"main_beam_group_delay_b%02d.png" % (bmnum))
+  p.savefig(figfile)
+  
+  p.figure(300+bmnum)
+  p.grid(True)
+  p.legend(loc=4)
+  ax=p.gca()
+  ax.set_xlim((8,20))
+  ax.set_ylim((0,1000))
+  p.xlabel("Freq [MHz]")
+  p.ylabel("Group Delay [nsec]")
+  p.title("%s Interf Array Group Delay Comparison\n Beam %d" % \
+      (radar,data_main.beam))
+  figfile=os.path.join(plot_directory,"interf_beam_group_delay_b%02d.png" % (bmnum))
+  p.savefig(figfile)
+
+  p.figure(400+bmnum)
+  p.grid(True)
+  p.legend(loc=4)
+  ax=p.gca()
+  ax.set_xlim((8,20))
+  ax.set_ylim((-360,360))
+  p.xlabel("Freq [MHz]")
+  p.ylabel("Phase difference [deg]")
+  p.title("%s Main Array Nearest Neighbor Phase Diff Comparison\n Beam %d" % \
+      (radar,data_main.beam))
+  figfile=os.path.join(plot_directory,"main_beam_pair_phase_diff_b%02d.png" % (bmnum))
+  p.savefig(figfile)
+
+  p.figure(500+bmnum)
+  p.grid(True)
+  p.legend(loc=4)
+  ax=p.gca()
+  ax.set_xlim((8,20))
+  ax.set_ylim(-360,360)
+  p.xlabel("Freq [MHz]")
+  p.ylabel("Phase difference [deg]")
+  p.title("%s Interf Array Nearest Neighbor Phase Diff Comparison\n Beam %d" % \
+      (radar,data_main.beam))
+  figfile=os.path.join(plot_directory,"interf_beam_pair_phase_diff_b%02d.png" % (bmnum))
+  p.savefig(figfile)
+
+  p.figure(104)
+  p.grid(True)
+  p.legend(loc=4)
+  ax=p.gca()
+  ax.set_xlim((8,20))
+  ax.set_ylim((-40,40))
+  p.xlabel("Freq [MHz]")
+  p.ylabel("tdiff [nsec]")
+  p.title("%s Recv Path Time Delay Difference\nBeam %d" % \
+      (radar,data_main.beam))
+  figfile=os.path.join(plot_directory,"beam_tdiff_b%02d.png" % (bmnum))
+  p.savefig(figfile)
+
+#  p.show()
