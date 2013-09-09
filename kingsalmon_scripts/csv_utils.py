@@ -1,6 +1,7 @@
 import csv
 import os
 import datetime
+
 class csv_data:
     card=None
     beam=None
@@ -18,7 +19,7 @@ class csv_data:
     freq_start=None
     freq_end=None
 
-def write_csv(directory,csv_data):
+def write_csv(directory,data):
     if data.timestamp is None: data.timestamp=datetime.datetime.now()
     if data.freqs is None: data.freqs=[]
     if data.tdelay is None: data.tdelay=[]
@@ -38,7 +39,7 @@ def write_csv(directory,csv_data):
     if not os.path.isdir(card_dir):
         print "Not a directory: %s" % (card_dir)
         return
-    beam_file=os.path.join(card_dir,"beam_%02d" % (data.beam)) 
+    beam_file=os.path.join(card_dir,"beam_%02d.csv" % (data.beam)) 
     csv_file=open(beam_file,"w")
     csv_writer=csv.writer(csv_file,delimiter="\t")
     header=[
