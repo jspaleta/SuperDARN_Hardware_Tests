@@ -10,11 +10,12 @@ from vna_control import *
 from qnx_beamcontrol import *
 from csv_utils import *
 
-import argparse, os, time
+import argparse, os, time, sys
 
 SWEEP_CENTER = 15e6
 SWEEP_SPAN = 20e6
 SWEEP_POINTS = 1201 
+TX_STARTUP_DELAY = 20
 TIMEOUT = max(0.1,0.04/201.0 * SWEEP_POINTS)
 BEAMS = 16
 
@@ -34,17 +35,17 @@ if __name__ == '__main__':
 
     # sanity check arguements 
     if args.avg < 1:
-        print "error: average count is less than 1"
+        sys.exit("error: average count is less than 1")
     
     if not os.path.exists(args.ddir):
-        print "error: data directory does not exist: %s" % (directory)
-    
+        sys.exit("error: data directory does not exist: %s" % (directory))
+
     if args.beams < 1:
-        print "error: beam count is less than 1"
+        sys.exit("error: beam count is less than 1")
 
     if args.paths < 1:
-        print "error: path count is less than 1"
-        
+        sys.exit("error: path count is less than 1")
+
     # open connection with VNA
     vna = lan_init(args.vnaip)
     
@@ -80,10 +81,10 @@ if __name__ == '__main__':
     csvdat.freq_start = min(csvdat.freqs)
     csvdat.freq_end = max(csvdat.freqs)
     
-
     # step through each path and measure phase, time delay, and magnitude at each beam setting
     for p in range(args.paths):
         p = int(raw_input('connect and enter a path number and then press enter to continue... '))
+        time.sleep(TX_STARTUP_DELAY) # wait for transmitter to warm up
         csvdat.card = p
 
         for b in range(args.beams):
