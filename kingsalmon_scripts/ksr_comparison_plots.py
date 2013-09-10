@@ -1,6 +1,9 @@
 from csv_utils import *
 import pylab as p
 import sys
+from ksr_vvm_measurements import *
+ksr_vvm_12MHz=p.array(ksr_vvm_measurements)
+#print "beam 1",ksr_vvm_12MHz[1]
 
 directory="/home/jspaleta/scratch/king_salmon_vnadata_sept_9_card7redo"
 plotdir="ksr_paired_recv_path_plots"
@@ -43,12 +46,11 @@ for bmnum in range(16):
     df=freqs[1]-freqs[0]
     f10_index=int((10E6-freqs[0])/df)+1
     f12_index=int((12E6-freqs[0])/df)+1
-    f15_index=int((15E6-freqs[0])/df)+1
+    f14_index=int((14E6-freqs[0])/df)+1
     main_tdelay=p.array(data_main.tdelay)
     main_ephase=p.array(data_main.ephase)
     main_ephase_slope=(main_ephase[700]-main_ephase[500])/(freqs[700]-freqs[500])
     main_ephase_offset=main_ephase[0]-main_ephase_slope*freqs[0]
-    print main_ephase_offset,main_ephase_slope,main_ephase[0],freqs[0]
     main_phase_from_tdelay=-main_tdelay*freqs*360.0
     main_ephase_diff=p.diff(data_main.ephase)
     freq_diff=p.diff(data_main.freqs)
@@ -114,18 +116,30 @@ for bmnum in range(16):
       p.savefig(figfile)
 
       p.figure(102)
+      pdiff=(ksr_vvm_12MHz[bmnum][card-1+10]-ksr_vvm_12MHz[bmnum][card-1]) % 360 
+      pdiff=(pdiff > 180) * -360 + pdiff
       p.clf()
       p.grid(True)
       p.plot(freqs*1E-6,phase_diff,color="black",label="Phase Diff")
       p.plot(freqs*1E-6,data_main.phase,color="red",label="Card %02d" % (card) )
       p.plot(freqs*1E-6,data_interf.phase,color="blue",label="Card %02d" % (card+10) )
+      p.plot([12],[pdiff],"go",label="Diff of VVM")
+      for i in xrange(9):
+        if i==0: label="VVM Diff"
+        else: label="_none_"
+        p.plot([9+i],[ksr_vvm_pdiff[card][bmnum][i]],"co",label=label)
+        
+        if (i % 2) ==1:
+          p.figtext(0.1*i+0.05,0.75,"%d MHz: %3.1f" % (i+9,ksr_vvm_pdiff[card][bmnum][i]),color="cyan",backgroundcolor="white")
+        
       p.legend(loc=4)
       ax=p.gca()
       ax.set_xlim((8,20))
-      ax.set_ylim((-200,200))
-      p.figtext(0.15,0.85,"10 MHz: %3.1f" % (phase_diff[f10_index]),backgroundcolor="white")
-      p.figtext(0.35,0.85,"12 MHz: %3.1f" % (phase_diff[f12_index]),backgroundcolor="white")
-      p.figtext(0.55,0.85,"15 MHz: %3.1f" % (phase_diff[f15_index]),backgroundcolor="white")
+      ax.set_ylim((-300,300))
+      p.figtext(0.15,0.85,"10 MHz: %3.1f" % (phase_diff[f10_index]),color="black",backgroundcolor="white")
+      p.figtext(0.35,0.85,"12 MHz: %3.1f" % (phase_diff[f12_index]),color="black",backgroundcolor="white")
+      p.figtext(0.55,0.85,"14 MHz: %3.1f" % (phase_diff[f14_index]),color="black",backgroundcolor="white")
+      p.figtext(0.35,0.80,"12 MHz: %3.1f" % (pdiff),color="green",backgroundcolor="white")
       p.xlabel("Freq [MHz]")
       p.ylabel("phase [deg]")
       p.title("%s Recv Path Phase Difference\n Card %02d and Card %02d Beam %d" % \

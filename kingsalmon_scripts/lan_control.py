@@ -10,7 +10,7 @@ def lan_init(host):
 
 def lan_send(tn, command, verbose=True):
     tn.write(command + ';*WAI\r\n')
-    time.sleep(.05)
+    time.sleep(.1)
     response = tn.read_until('>', VNATIMEOUT)
     response = response[:-7] # strip trailing SCPI>\r\n
     if(verbose):
