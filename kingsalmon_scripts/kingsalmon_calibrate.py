@@ -15,7 +15,7 @@ import argparse, os, time, sys
 SWEEP_CENTER = 15e6
 SWEEP_SPAN = 20e6
 SWEEP_POINTS = 1201 
-TX_STARTUP_DELAY = 20
+TX_STARTUP_DELAY = 5
 TIMEOUT = max(0.1,0.04/201.0 * SWEEP_POINTS)
 BEAMS = 16
 
@@ -84,11 +84,13 @@ if __name__ == '__main__':
     # step through each path and measure phase, time delay, and magnitude at each beam setting
     for p in range(args.paths):
         p = int(raw_input('connect and enter a path number and then press enter to continue... '))
+        print "Waiting %d seconds" % (TX_STARTUP_DELAY)
         time.sleep(TX_STARTUP_DELAY) # wait for transmitter to warm up
         csvdat.card = p
 
         for b in range(args.beams):
             csvdat.beam = b
+            print "Setup Path : %d Beam: %d" % (p,b)
             qnx_setbeam(args.qnxip, b)
             vna_clearave(vna)
             vna_trigger(vna, TIMEOUT, args.avg)

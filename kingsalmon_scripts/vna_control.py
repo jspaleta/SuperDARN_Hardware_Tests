@@ -15,16 +15,16 @@ def vna_init(vna):
     lan_send(vna, ":INITiate:CONTinuous OFF")
     lan_send(vna, ":CALC1:PAR:COUN 4")
     lan_send(vna, ":CALC1:PAR1:SEL")
-    lan_send(vna, ":CALC1:PAR1:DEFine S21")
+    lan_send(vna, ":CALC1:PAR1:DEFine S12")
     lan_send(vna, ":CALC1:FORM UPH")
     lan_send(vna, ":CALC1:PAR2:SEL")
-    lan_send(vna, ":CALC1:PAR2:DEFine S21")
+    lan_send(vna, ":CALC1:PAR2:DEFine S12")
     lan_send(vna, ":CALC1:FORM GDEL")
     lan_send(vna, ":CALC1:PAR3:SEL")
-    lan_send(vna, ":CALC1:PAR3:DEFine S21")
+    lan_send(vna, ":CALC1:PAR3:DEFine S12")
     lan_send(vna, ":CALC1:FORM MLOG")
     lan_send(vna, ":CALC1:PAR4:SEL")
-    lan_send(vna, ":CALC1:PAR4:DEFine S21")
+    lan_send(vna, ":CALC1:PAR4:DEFine S12")
     lan_send(vna, ":CALC1:FORM PHAS")
     lan_send(vna, ":SENS1:AVER OFF");
 
@@ -101,17 +101,19 @@ def vna_readtimedelay(vna):
     return delay[0::2]
 
 def vna_through_cal(vna):
-    raw_input('connect S21 through and press enter to continue')
+    raw_input('connect S12 through and press enter to continue')
     lan_send(vna, ":SENS1:CORR:COLL:METH:THRU 1,2")
     time.sleep(1) 
     lan_send(vna, "SENS1:CORR:COLL:THRU 1,2")
     time.sleep(4)
-    lan_send(vna, ":SENS1:CORR:COLL:METH:THRU 2,1")
-    time.sleep(1)
-    lan_send(vna, ":SENS1:CORR:COLL:THRU 2,1")
-    time.sleep(4)
     lan_send(vna, ":SENS1:CORR:COLL:SAVE")
     time.sleep(1)
+#    lan_send(vna, ":SENS1:CORR:COLL:METH:THRU 2,1")
+#    time.sleep(1)
+#    lan_send(vna, ":SENS1:CORR:COLL:THRU 2,1")
+#    time.sleep(4)
+#    lan_send(vna, ":SENS1:CORR:COLL:SAVE")
+#    time.sleep(1)
     raw_input('calibration complete, connect DUT and press enter to continue')
 
 def vna_readspan(vna):
