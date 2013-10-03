@@ -8,7 +8,7 @@ def lan_init(host):
     print "initial response from VNA: " + tn.read_until("MAGIC", timeout=5)
     return tn 
 
-def lan_send(tn, command, verbose=True):
+def lan_send(tn, command, verbose=False):
     tn.write(command + ';*WAI\r\n')
     time.sleep(.1)
     response = tn.read_until('>', VNATIMEOUT)

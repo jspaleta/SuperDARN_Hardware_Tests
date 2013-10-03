@@ -18,8 +18,11 @@ class csv_data:
     freqs=None
     freq_start=None
     freq_end=None
+    tuned_freq_start = None 
+    tuned_freq_end = None 
+    tuned_freq_center = None
 
-def write_csv(directory,data):
+def write_csv(directory,data,has_tuned_freq=False):
     if data.timestamp is None: data.timestamp=datetime.datetime.now()
     if data.freqs is None: data.freqs=[]
     if data.tdelay is None: data.tdelay=[]
@@ -39,7 +42,7 @@ def write_csv(directory,data):
     if not os.path.isdir(card_dir):
         print "Not a directory: %s" % (card_dir)
         return
-    beam_file=os.path.join(card_dir,"beam_%02d.csv" % (data.beam)) 
+    beam_file=os.path.join(card_dir,"beam_%04d.csv" % (data.beam)) 
     csv_file=open(beam_file,"w")
     csv_writer=csv.writer(csv_file,delimiter="\t")
     header=[
@@ -62,6 +65,13 @@ def write_csv(directory,data):
         "Time Delay Smoothing Percent:",data.smoothing_percent,
     ]
     csv_writer.writerow(header)
+    if(has_tuned_freq):
+        header=[
+            "Tuned Freq Start:",data.tuned_freq_start,
+            "Tuned Freq Center:",data.tuned_freq_center,
+            "Tuned Freq End:",data.tuned_freq_end,
+        ]
+        csv_writer.writerow(header)
     labels=[
         "Freq [Hz]",
         "Time Delay [sec]",
@@ -83,13 +93,14 @@ def write_csv(directory,data):
     
     return
 
-def read_csv(directory,data):
+def read_csv(directory,data,has_tuned_freq=False):
     card_dir=os.path.join(directory,"card_%02d" % (data.card)) 
-    beam_file=os.path.join(card_dir,"beam_%02d.csv" % (data.beam)) 
-    print beam_file
+    beam_file=os.path.join(card_dir,"beam_%04d.csv" % (data.beam)) 
     if not os.path.exists(beam_file):
-        print "file does not exist: %s" % (beam_file)
-        return
+        beam_file=os.path.join(card_dir,"beam_%02d.csv" % (data.beam))
+        if not os.path.exists(beam_file):
+          print "file does not exist: %s" % (beam_file)
+          return
     csv_file=open(beam_file,"r")
     reader=csv.reader(csv_file,delimiter="\t")
     header=reader.next()
@@ -104,9 +115,18 @@ def read_csv(directory,data):
     header=reader.next()
     data.ave_enable=header[1]=="True"
     data.ave_count=int(header[3])
+
     header=reader.next()
     data.smoothing_enable=header[1]=="True"
     data.smoothing_percent=float(header[3])
+
+    if(has_tuned_freq):
+      header=reader.next()
+      #print header 
+      data.tuned_freq_start = float(header[1]) 
+      data.tuned_freq_center = float(header[3])
+      data.tuned_freq_end = float(header[5])
+
     header=reader.next()
     data.freqs= [0] * data.sweep_count
     data.tdelay= [0] * data.sweep_count 
@@ -127,7 +147,7 @@ def read_csv(directory,data):
     return
 
 if __name__ == '__main__':
-    directory="/home/jspaleta/scratch/kingsalmon_test"
+    directory="/home/jspaleta/scratch/king_salmon_vnadata_sept_10/"
     data=csv_data()
     data.card=18
     data.beam=12
