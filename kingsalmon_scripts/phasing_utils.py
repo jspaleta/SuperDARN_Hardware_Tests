@@ -24,20 +24,13 @@ def verify(ip, card,beamcode,phasecode,attencode,rnum=1):
     if retval==0: return True
     else: return False 
 
-def read_phase(ip, card,beamcode,rnum=1):
-    commpath="/root/current_ros/read_beam_phase"
-    commstring='ssh root@%s "%s -c %i -m %i -r %i >/dev/null 2>/dev/null"' % \
+def read_memory(ip, card,beamcode,rnum=1):
+    commpath="/root/current_ros/verify_card_memory"
+    commstring='ssh root@%s "%s -c %i -m %i -r %i 2>/dev/null"' % \
       (ip,commpath,card,beamcode,rnum)
     print commstring
-    retval=subprocess.call(commstring,shell=True)
-    if retval==0: return True
-    else: return False 
+    output=subprocess.check_output(commstring,shell=True).split("\n")
+    atten=int(output[0][23:31])  
+    phase=int(output[1][23:31])  
+    return atten,phase
 
-def read_atten(ip, card,beamcode,rnum=1):
-    commpath="/root/current_ros/read_beam_atten"
-    commstring='ssh root@%s "%s -c %i -m %i -r %i >/dev/null 2>/dev/null"' % \
-      (ip,commpath,card,beamcode,rnum)
-    print commstring
-    retval=subprocess.call(commstring,shell=True)
-    if retval==0: return True
-    else: return False 
